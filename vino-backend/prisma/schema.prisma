@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model cases {
+  id               Int        @id @default(autoincrement())
+  chapter_id       Int
+  case_title       String
+  case_description String?
+  chapters         chapters   @relation(fields: [chapter_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  evidence         evidence[]
+
+  @@index([chapter_id], map: "idx_cases_chapter_id")
+}
+
+model chapters {
+  id             Int      @id @default(autoincrement())
+  story_id       Int
+  chapter_number Int
+  title          String
+  description    String?
+  cases          cases[]
+  stories        stories  @relation(fields: [story_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  scenes         scenes[]
+
+  @@unique([story_id, chapter_number])
+  @@index([story_id], map: "idx_chapters_story_id")
+}
+
+model characters {
+  id                  Int                @id @default(autoincrement())
+  character_name      String             @unique
+  description         String?
+  alibi               String?
+  motive              String?
+  default_sprite_path String?
+  dialogue_entries    dialogue_entries[]
+}
+
+model dialogue_entries {
+  id                      Int             @id @default(autoincrement())
+  scene_id                Int
+  character_id            Int?
+  dialogue_text           String
+  character_expression    String?
+  display_conditions_json Json?
+  consequences_json       Json?
+  order_index             Int
+  characters              characters?     @relation(fields: [character_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  scenes                  scenes          @relation(fields: [scene_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  scene_choices           scene_choices[]
+
+  @@index([scene_id], map: "idx_dialogue_entries_scene_id")
+}
+
+model evidence {
+  id              Int      @id @default(autoincrement())
+  case_id         Int
+  evidence_name   String
+  description     String
+  image_path      String?
+  is_key_evidence Boolean? @default(false)
+  cases           cases    @relation(fields: [case_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([case_id], map: "idx_evidence_case_id")
+}
+
+model investigation_points {
+  id                 Int    @id @default(autoincrement())
+  scene_id           Int
+  point_name         String
+  coordinates_json   Json?
+  requirements_json  Json?
+  consequences_json  Json?
+  examined_flag_name String @unique
+  scenes             scenes @relation(fields: [scene_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([scene_id], map: "idx_investigation_points_scene_id")
+}
+
+model player_saves {
+  id               Int       @id @default(autoincrement())
+  save_slot        Int       @unique
+  player_name      String?
+  save_description String?
+  current_scene_id Int
+  game_state       Json
+  user_id Int?
+  user user? @relation(fields: [user_id], references: [id])
+  playtime_seconds Int?      @default(0)
+  screenshot_path  String?
+  last_played      DateTime? @default(now()) @db.Timestamptz(6)
+  scenes           scenes    @relation(fields: [current_scene_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([game_state], map: "idx_player_saves_game_state", type: Gin)
+}
+
+model scene_choices {
+  id                                         Int               @id @default(autoincrement())
+  after_dialogue_id                          Int?
+  scene_id                                   Int
+  choice_text                                String
+  requirements_json                          Json?
+  next_scene_id                              Int
+  consequences_json                          Json?
+  order_index                                Int
+  dialogue_entries                           dialogue_entries? @relation(fields: [after_dialogue_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  scenes_scene_choices_next_scene_idToscenes scenes            @relation("scene_choices_next_scene_idToscenes", fields: [next_scene_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  scenes_scene_choices_scene_idToscenes      scenes            @relation("scene_choices_scene_idToscenes", fields: [scene_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([scene_id], map: "idx_scene_choices_scene_id")
+}
+
+model scenes {
+  id                                                Int                    @id @default(autoincrement())
+  chapter_id                                        Int
+  scene_name                                        String
+  scene_type                                        String
+  background_image_path                             String?
+  background_music_path                             String?
+  order_index                                       Int?                   @default(0)
+  dialogue_entries                                  dialogue_entries[]
+  investigation_points                              investigation_points[]
+  player_saves                                      player_saves[]
+  scene_choices_scene_choices_next_scene_idToscenes scene_choices[]        @relation("scene_choices_next_scene_idToscenes")
+  scene_choices_scene_choices_scene_idToscenes      scene_choices[]        @relation("scene_choices_scene_idToscenes")
+  chapters                                          chapters               @relation(fields: [chapter_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  supernatural_events                               supernatural_events[]
+
+  @@index([chapter_id], map: "idx_scenes_chapter_id")
+}
+
+model stories {
+  id          Int        @id @default(autoincrement())
+  title       String     @unique
+  description String?
+  created_at  DateTime?  @default(now()) @db.Timestamptz(6)
+  chapters    chapters[]
+}
+
+model supernatural_events {
+  id                      Int     @id @default(autoincrement())
+  scene_id                Int
+  event_name              String
+  description             String?
+  trigger_conditions_json Json?
+  consequences_json       Json?
+  triggered_flag_name     String  @unique
+  scenes                  scenes  @relation(fields: [scene_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([scene_id], map: "idx_supernatural_events_scene_id")
+}
+
+model user {
+  id Int @id @default(autoincrement())
+  username String @unique
+  email String @unique
+  passwordHash String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  saves player_saves[] 
+}
