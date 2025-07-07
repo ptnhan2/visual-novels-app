@@ -1,0 +1,80 @@
+# 👉 Node.js (dùng chung cho cả frontend và backend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+
+# 👉 Logs
+logs/
+*.log
+*.log.*
+
+# 👉 OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 👉 dotenv (chứa key bảo mật)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 👉 Database & Prisma
+prisma/dev.db
+prisma/dev.db-journal
+prisma/migrations/
+*.sqlite
+*.db
+
+# 👉 Vite (React frontend)
+fe/node_modules/
+fe/dist/
+fe/.vite/
+
+# 👉 Express backend
+be/node_modules/
+be/dist/
+be/tmp/
+be/coverage/
+
+# 👉 Optional: test output
+coverage/
+*.lcov
+
+# 👉 Optional: Mac specific
+*.DS_Store
+
+# 👉 Optional: Windows specific
+ehthumbs.db
+Desktop.ini
+
+# 👉 Optional: local media assets (if not needed in repo)
+public/assets/dev/
+assets/raw/
+*.psd
+*.xcf
+*.wav
+*.mp3
+*.zip
+
+# 👉 Optional: IDE & tool specific
+*.log
+*.cache
+*.out
+*.tmp
+*.pid
+*.seed
+*.tgz
+
+# 👉 Optional: Optional lock files (chọn dùng 1 trình quản lý package)
+# Uncomment nếu bạn chỉ dùng npm
+# yarn.lock
+# pnpm-lock.yaml
